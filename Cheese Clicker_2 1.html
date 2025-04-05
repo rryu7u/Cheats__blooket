@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cheese Clicker</title>
+  <script src="https://unpkg.com/lucide@0.344.0"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #fffbeb;
+      padding: 1rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 64rem;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #92400e;
+      margin-bottom: 1rem;
+    }
+
+    .cheese-count {
+      font-size: 1.5rem;
+      color: #b45309;
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 0.5rem;
+    }
+
+    .stat {
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .game-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .clicker-section {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cheese-button {
+      width: 200px;
+      height: 200px;
+      background-color: #fef3c7;
+      border: 8px solid #f59e0b;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      position: relative;
+      box-shadow: 0 8px 16px -4px rgba(245, 158, 11, 0.3);
+    }
+
+    .cheese-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 24px -6px rgba(245, 158, 11, 0.4);
+      background-color: #fde68a;
+    }
+
+    .cheese-button:active {
+      transform: scale(0.95);
+      box-shadow: 0 4px 8px -2px rgba(245, 158, 11, 0.2);
+    }
+
+    .cheese-button svg {
+      width: 140px;
+      height: 140px;
+      color: #f59e0b;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .cheese-button::after {
+      content: 'CLICK!';
+      position: absolute;
+      bottom: -2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #b45309;
+      font-weight: bold;
+      font-size: 1.2rem;
+      opacity: 0.8;
+    }
+
+    .upgrade-category {
+      background-color: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upgrade-button {
+      width: 100%;
+      padding: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      background-color: #fef3c7;
+      margin-bottom: 0.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background-color 0.2s;
+    }
+
+    .upgrade-button:hover:not(:disabled) {
+      background-color: #fde68a;
+    }
+
+    .upgrade-button:disabled {
+      background-color: #f3f4f6;
+      cursor: not-allowed;
+    }
+
+    .upgrade-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .upgrade-name {
+      font-weight: bold;
+    }
+
+    .upgrade-stats {
+      font-size: 0.875rem;
+      color: #4b5563;
+    }
+
+    .upgrade-cost {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .achievements {
+      margin-top: 2rem;
+    }
+
+    .achievement-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .achievement-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .achievement {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      background-color: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .achievement.unlocked {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .achievement-name {
+      font-weight: bold;
+    }
+
+    .achievement-description {
+      font-size: 0.875rem;
+    }
+
+    /* Particle Effects */
+    .particle {
+      position: fixed;
+      pointer-events: none;
+      animation: particle-animation 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+      font-size: 2rem;
+      user-select: none;
+      z-index: 1000;
+    }
+
+    @keyframes particle-animation {
+      0% {
+        transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, calc(-50% - 100px)) scale(1.5) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .upgrade-particle {
+      position: fixed;
+      pointer-events: none;
+      animation: upgrade-particle-animation 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+      font-size: 1.5rem;
+      user-select: none;
+      z-index: 1000;
+    }
+
+    @keyframes upgrade-particle-animation {
+      0% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -200%) scale(0) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* Pulse animation for the cheese button */
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 20px rgba(245, 158, 11, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+      }
+    }
+
+    .cheese-button {
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">Cheese Clicker</h1>
+      <div class="cheese-count">🧀 <span id="cheese">0</span> cheese</div>
+      <div class="stats">
+        <div class="stat">
+          <i data-lucide="mouse-pointer-click"></i>
+          <span id="clickPower">1</span> per click
+        </div>
+        <div class="stat">
+          <i data-lucide="clock-3"></i>
+          <span id="cps">0</span> per second
+        </div>
+      </div>
+    </div>
+
+    <div class="game-grid">
+      <div class="clicker-section">
+        <button id="clickerButton" class="cheese-button">
+          <i data-lucide="cheese" size="140"></i>
+        </button>
+      </div>
+
+      <div class="upgrade-sections">
+        <div class="upgrade-category">
+          <h2 class="section-title">
+            <i data-lucide="mouse-pointer-click"></i>
+            <span>Click Power</span>
+          </h2>
+          <div id="clickUpgradesList"></div>
+        </div>
+
+        <div class="upgrade-category">
+          <h2 class="section-title">
+            <i data-lucide="clock-3"></i>
+            <span>Passive Income</span>
+          </h2>
+          <div id="upgradesList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="achievements">
+      <h2 class="section-title">
+        <i data-lucide="trophy"></i>
+        <span>Achievements</span>
+      </h2>
+      <div id="achievementsList" class="achievement-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Game state
+    let cheese = 0;
+    let clickPower = 1;
+    let lastClicks = [];
+    let cps = 0;
+    let totalClicks = 0;
+    let totalCheese = 0;
+
+    const clickUpgrades = [
+      { id: 'knife', name: 'Cheese Knife', cost: 15, power: 1, owned: 0 },
+      { id: 'grater', name: 'Cheese Grater', cost: 100, power: 5, owned: 0 },
+      { id: 'slicer', name: 'Cheese Slicer', cost: 500, power: 25, owned: 0 },
+      { id: 'wheel', name: 'Cheese Wheel', cost: 2000, power: 100, owned: 0 }
+    ];
+
+    const upgrades = [
+      { id: 'mouse', name: 'Cheese Mouse', cost: 10, cps: 0.1, owned: 0 },
+      { id: 'cat', name: 'Cheese Cat', cost: 50, cps: 0.5, owned: 0 },
+      { id: 'farmer', name: 'Cheese Farmer', cost: 200, cps: 2, owned: 0 },
+      { id: 'factory', name: 'Cheese Factory', cost: 1000, cps: 10, owned: 0 }
+    ];
+
+    const achievements = [
+      { id: 'cheese10', name: 'Cheese Novice', description: 'Collect 10 cheese', requirement: 10, unlocked: false },
+      { id: 'cheese100', name: 'Cheese Amateur', description: 'Collect 100 cheese', requirement: 100, unlocked: false },
+      { id: 'cheese1000', name: 'Cheese Professional', description: 'Collect 1000 cheese', requirement: 1000, unlocked: false },
+      { id: 'cheese10k', name: 'Cheese Master', description: 'Collect 10,000 cheese', requirement: 10000, unlocked: false },
+      { id: 'cheese100k', name: 'Cheese Grandmaster', description: 'Collect 100,000 cheese', requirement: 100000, unlocked: false },
+      { id: 'cheese1m', name: 'Cheese Millionaire', description: 'Collect 1,000,000 cheese', requirement: 1000000, unlocked: false },
+      { id: 'click500', name: 'Click Emperor', description: 'Reach 500 cheese per click', requirement: 500, unlocked: false },
+      { id: 'click1000', name: 'Click God', description: 'Reach 1,000 cheese per click', requirement: 1000, unlocked: false },
+      { id: 'clicks100', name: 'Click Enthusiast', description: 'Click 100 times', requirement: 100, unlocked: false },
+      { id: 'clicks1000', name: 'Click Maniac', description: 'Click 1,000 times', requirement: 1000, unlocked: false },
+      { id: 'clicks10000', name: 'Click Legend', description: 'Click 10,000 times', requirement: 10000, unlocked: false },
+      { id: 'upgrade5', name: 'Upgrade Collector', description: 'Own 5 of any upgrade', requirement: 5, unlocked: false },
+      { id: 'upgrade10', name: 'Upgrade Hoarder', description: 'Own 10 of any upgrade', requirement: 10, unlocked: false },
+      { id: 'upgrade25', name: 'Upgrade Master', description: 'Own 25 of any upgrade', requirement: 25, unlocked: false },
+      { id: 'total10k', name: 'Mass Producer', description: 'Produce 10,000 total cheese', requirement: 10000, unlocked: false },
+      { id: 'total100k', name: 'Cheese Tycoon', description: 'Produce 100,000 total cheese', requirement: 100000, unlocked: false },
+      { id: 'total1m', name: 'Cheese Empire', description: 'Produce 1,000,000 total cheese', requirement: 1000000, unlocked: false },
+      { id: 'allUpgrades', name: 'Completionist', description: 'Own at least one of each upgrade', requirement: 1, unlocked: false },
+      { id: 'speedClicker', name: 'Lightning Fingers', description: 'Click 10 times in one second', requirement: 10, unlocked: false },
+      { id: 'cheeseWhale', name: 'Cheese Whale', description: 'Have 1,000,000 cheese at once', requirement: 1000000, unlocked: false }
+    ];
+
+    // DOM elements
+    const cheeseDisplay = document.getElementById('cheese');
+    const clickPowerDisplay = document.getElementById('clickPower');
+    const cpsDisplay = document.getElementById('cps');
+    const clickerButton = document.getElementById('clickerButton');
+    const clickUpgradesList = document.getElementById('clickUpgradesList');
+    const upgradesList = document.getElementById('upgradesList');
+    const achievementsList = document.getElementById('achievementsList');
+
+    // Particle system
+    function createParticle(x, y, type = 'click') {
+      const particle = document.createElement('div');
+      particle.className = type === 'click' ? 'particle' : 'upgrade-particle';
+      particle.textContent = '🧀';
+      particle.style.left = `${x}px`;
+      particle.style.top = `${y}px`;
+
+      document.body.appendChild(particle);
+
+      particle.addEventListener('animationend', () => {
+        particle.remove();
+      });
+    }
+
+    // Click handler
+    clickerButton.addEventListener('click', (e) => {
+      const rect = clickerButton.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      // Create particles in a circle around the click point
+      const numParticles = 6;
+      for (let i = 0; i < numParticles; i++) {
+        const angle = (i / numParticles) * Math.PI * 2;
+        const distance = 40;
+        const x = centerX + Math.cos(angle) * distance;
+        const y = centerY + Math.sin(angle) * distance;
+        
+        setTimeout(() => {
+          createParticle(x, y, 'click');
+        }, i * 50);
+      }
+
+      const clickValue = calculateTotalClickPower();
+      cheese += clickValue;
+      totalCheese += clickValue;
+      totalClicks++;
+      lastClicks.push(Date.now());
+      updateDisplay();
+      checkAchievements();
+    });
+
+    function calculateTotalClickPower() {
+      return clickUpgrades.reduce((total, upgrade) => 
+        total + (upgrade.power * upgrade.owned), clickPower);
+    }
+
+    function calculateCPS() {
+      const now = Date.now();
+      lastClicks = lastClicks.filter(time => now - time < 1000);
+      return lastClicks.length;
+    }
+
+    function updateDisplay() {
+      cheeseDisplay.textContent = Math.floor(cheese);
+      clickPowerDisplay.textContent = calculateTotalClickPower();
+      renderClickUpgrades();
+      renderUpgrades();
+    }
+
+    function renderClickUpgrades() {
+      clickUpgradesList.innerHTML = clickUpgrades.map(upgrade => `
+        <button
+          class="upgrade-button"
+          onclick="buyClickUpgrade('${upgrade.id}')"
+          ${cheese < upgrade.cost ? 'disabled' : ''}
+        >
+          <div class="upgrade-info">
+            <div class="upgrade-name">${upgrade.name}</div>
+            <div class="upgrade-stats">+${upgrade.power} per click</div>
+            <div class="upgrade-stats">Owned: ${upgrade.owned}</div>
+          </div>
+          <div class="upgrade-cost">
+            <span>${upgrade.cost} 🧀</span>
+            <i data-lucide="arrow-up"></i>
+          </div>
+        </button>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderUpgrades() {
+      upgradesList.innerHTML = upgrades.map(upgrade => `
+        <button
+          class="upgrade-button"
+          onclick="buyUpgrade('${upgrade.id}')"
+          ${cheese < upgrade.cost ? 'disabled' : ''}
+        >
+          <div class="upgrade-info">
+            <div class="upgrade-name">${upgrade.name}</div>
+            <div class="upgrade-stats">+${upgrade.cps} per second</div>
+            <div class="upgrade-stats">Owned: ${upgrade.owned}</div>
+          </div>
+          <div class="upgrade-cost">
+            <span>${upgrade.cost} 🧀</span>
+            <i data-lucide="arrow-up"></i>
+          </div>
+        </button>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function createUpgradeParticles(button) {
+      const rect = button.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          const angle = (i / 5) * Math.PI * 2;
+          const distance = 30;
+          const x = centerX + Math.cos(angle) * distance;
+          const y = centerY + Math.sin(angle) * distance;
+          
+          createParticle(x, y, 'upgrade');
+        }, i * 50);
+      }
+    }
+
+    function buyClickUpgrade(upgradeId) {
+      const upgrade = clickUpgrades.find(u => u.id === upgradeId);
+      if (upgrade && cheese >= upgrade.cost) {
+        const button = document.querySelector(`button[onclick="buyClickUpgrade('${upgradeId}')"]`);
+        createUpgradeParticles(button);
+
+        cheese -= upgrade.cost;
+        upgrade.owned += 1;
+        upgrade.cost = Math.floor(upgrade.cost * 1.15);
+        updateDisplay();
+        checkAchievements();
+      }
+    }
+
+    function buyUpgrade(upgradeId) {
+      const upgrade = upgrades.find(u => u.id === upgradeId);
+      if (upgrade && cheese >= upgrade.cost) {
+        const button = document.querySelector(`button[onclick="buyUpgrade('${upgradeId}')"]`);
+        createUpgradeParticles(button);
+
+        cheese -= upgrade.cost;
+        upgrade.owned += 1;
+        upgrade.cost = Math.floor(upgrade.cost * 1.15);
+        updateDisplay();
+        checkAchievements();
+      }
+    }
+
+    function renderAchievements() {
+      achievementsList.innerHTML = achievements.map(achievement => `
+        <div class="achievement ${achievement.unlocked ? 'unlocked' : ''}">
+          <div class="achievement-name">${achievement.name}</div>
+          <div class="achievement-description">${achievement.description}</div>
+        </div>
+      `).join('');
+    }
+
+    function checkAchievements() {
+      let updated = false;
+      achievements.forEach(achievement => {
+        if (!achievement.unlocked) {
+          if (achievement.id.startsWith('cheese') && cheese >= achievement.requirement) {
+            achievement.unlocked = true;
+            updated = true;
+          }
+          
+          if (achievement.id.startsWith('click') && calculateTotalClickPower() >= achievement.requirement) {
+            achievement.unlocked = true;
+            updated = true;
+          }
+          
+          if (achievement.id.startsWith('clicks') && totalClicks >= achievement.requirement) {
+            achievement.unlocked = true;
+            updated = true;
+          }
+          
+          if (achievement.id.startsWith('upgrade')) {
+            const maxOwned = Math.max(
+              ...upgrades.map(u => u.owned),
+              ...clickUpgrades.map(u => u.owned)
+            );
+            if (maxOwned >= achievement.requirement) {
+              achievement.unlocked = true;
+              updated = true;
+            }
+          }
+          
+          if (achievement.id.startsWith('total') && totalCheese >= achievement.requirement) {
+            achievement.unlocked = true;
+            updated = true;
+          }
+          
+          if (achievement.id === 'allUpgrades') {
+            const hasAllUpgrades = upgrades.every(u => u.owned > 0) && 
+                                 clickUpgrades.every(u => u.owned > 0);
+            if (hasAllUpgrades) {
+              achievement.unlocked = true;
+              updated = true;
+            }
+          }
+          
+          if (achievement.id === 'speedClicker' && calculateCPS() >= 10) {
+            achievement.unlocked = true;
+            updated = true;
+          }
+          
+          if (achievement.id === 'cheeseWhale' && cheese >= achievement.requirement) {
+            achievement.unlocked = true;
+            updated = true;
+          }
+        }
+      });
+      
+      if (updated) {
+        renderAchievements();
+      }
+    }
+
+    // Passive income
+    setInterval(() => {
+      const passiveIncome = upgrades.reduce((acc, upgrade) => 
+        acc + (upgrade.cps * upgrade.owned), 0);
+      cheese += passiveIncome;
+      totalCheese += passiveIncome;
+      updateDisplay();
+      checkAchievements();
+    }, 1000);
+
+    // Update CPS
+    setInterval(() => {
+      cps = calculateCPS();
+      cpsDisplay.textContent = cps;
+    }, 100);
+
+    // Initial render
+    renderClickUpgrades();
+    renderUpgrades();
+    renderAchievements();
+  </script>
+</body>
+</html>
